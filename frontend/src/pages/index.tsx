@@ -112,7 +112,7 @@ export default function IndexPage() {
       toast.loading('Waiting for approval confirmation...', { id: toastId })
     } catch (error: any) {
       console.error('Error approving USDC:', error)
-      toast.error(error.message || 'Failed to approve USDC', { id: toastId })
+      toast.error(error.message || 'Failed to approve USDC', { duration: 5000 })
       toast.dismiss(toastId)
     }
 	
@@ -153,7 +153,7 @@ export default function IndexPage() {
       toast.loading('Waiting for swap confirmation...', { id: toastId })
     } catch (error: any) {
       console.error('Error depositing:', error)
-      toast.error(error.message || 'Failed to swap USDC for BLTM', { id: toastId })
+      toast.error(error.message || 'Failed to swap USDC for BLTM', { duration: 5000 })
       toast.dismiss(toastId)
     }
     setIsDepositing(false)
