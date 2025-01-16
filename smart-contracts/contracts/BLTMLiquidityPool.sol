@@ -61,7 +61,7 @@ contract BLTMLiquidityPool is AccessControl {
         uint256 netUsdcAmount = usdcAmount - royaltyAmount;
 
         // calculate BLTM amount to mint based on net USDC amount
-        uint256 bltmAmount = netUsdcAmount * exchangeRate;
+        uint256 bltmAmount = usdcAmount * exchangeRate;
 
         // transfer USDC from user to contract
         usdc.safeTransferFrom(msg.sender, address(this), usdcAmount);
