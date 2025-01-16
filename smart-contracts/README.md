@@ -11,3 +11,6 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat ignition deploy ./ignition/modules/Lock.ts
 ```
+
+
+BLTM token deployed to: 0x0DA8D7B57e5905c793Eb873B89bb44Ca18eddBe1
