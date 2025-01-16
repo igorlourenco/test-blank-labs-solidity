@@ -8,61 +8,17 @@ import {
   useWaitForTransactionReceipt,
 } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
-import { formatUnits, parseUnits } from 'viem'
+import { erc20Abi, formatUnits, parseUnits } from 'viem'
 import { polygonAmoy } from 'viem/chains'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
+import { liquidityPoolAbi } from '../config/abi'
 
 const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`
 const BLTM_ADDRESS = process.env.NEXT_PUBLIC_BLTM_ADDRESS as `0x${string}`
 const LIQUIDITY_POOL_ADDRESS = process.env
   .NEXT_PUBLIC_LIQUIDITY_POOL_ADDRESS as `0x${string}`
 
-const erc20Abi = [
-  {
-    name: 'balanceOf',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [{ name: 'account', type: 'address' }],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-  {
-    name: 'allowance',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [
-      { name: 'owner', type: 'address' },
-      { name: 'spender', type: 'address' },
-    ],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-  {
-    name: 'approve',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'spender', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-  },
-] as const
-
-const liquidityPoolAbi = [
-  {
-    name: 'exchangeRate',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-  {
-    name: 'swapUSDCForBLTM',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [{ name: 'usdcAmount', type: 'uint256' }],
-    outputs: [],
-  },
-] as const
 
 export default function IndexPage() {
   const { address, isConnected } = useAccount()
@@ -111,18 +67,37 @@ export default function IndexPage() {
   const { writeContractAsync: approveUsdc } = useWriteContract()
   const { writeContractAsync: deposit } = useWriteContract()
 
-  // Wait for transactions
-  const { isLoading: isWaitingForApproval } = useWaitForTransactionReceipt({
+  // Get transaction receipts
+  const { isLoading: isWaitingForApproval, isSuccess: isApprovalSuccess } = useWaitForTransactionReceipt({
     hash: approvalHash,
   })
 
-  const { isLoading: isWaitingForDeposit } = useWaitForTransactionReceipt({
+  const { isLoading: isWaitingForDeposit, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({
     hash: depositHash,
   })
+
+  // Watch for transaction success/failure
+  useEffect(() => {
+    if (isApprovalSuccess) {
+      toast.success('USDC approved successfully!')
+      toast.dismiss()
+    }
+  }, [isApprovalSuccess])
+
+  useEffect(() => {
+    if (isDepositSuccess) {
+      toast.success('Swap completed successfully!')
+      toast.dismiss()
+      setDepositAmount('')
+    }
+  }, [isDepositSuccess])
 
   const handleApproveUsdc = async () => {
     if (!depositAmount || !address) return
     setIsApproving(true)
+    
+    const toastId = toast.loading('Approving USDC...')
+    
     try {
       const amount = parseUnits(depositAmount, 6)
       const hash = await approveUsdc({
@@ -134,9 +109,13 @@ export default function IndexPage() {
         account: address,
       })
       setApprovalHash(hash)
-    } catch (error) {
+      toast.loading('Waiting for approval confirmation...', { id: toastId })
+    } catch (error: any) {
       console.error('Error approving USDC:', error)
+      toast.error(error.message || 'Failed to approve USDC', { id: toastId })
+      toast.dismiss(toastId)
     }
+	
     setIsApproving(false)
   }
 
@@ -148,19 +127,20 @@ export default function IndexPage() {
     
     // Check USDC balance
     if (!usdcBalance || amount > usdcBalance) {
-      alert('Insufficient USDC balance')
+      toast.error('Insufficient USDC balance')
       return
     }
 
     // Check allowance
     if (!usdcAllowance || amount > usdcAllowance) {
-      alert('Please approve USDC first')
+      toast.error('Please approve USDC first')
       return
     }
 
     setIsDepositing(true)
+    const toastId = toast.loading('Swapping USDC for BLTM...')
+    
     try {
-
       const hash = await deposit({
         address: LIQUIDITY_POOL_ADDRESS,
         abi: liquidityPoolAbi,
@@ -168,18 +148,13 @@ export default function IndexPage() {
         args: [amount],
         chain: polygonAmoy,
         account: address,
-      }).catch((error) => {
-        console.error('Error depositing:', error)
-      }).then(hash => hash as `0x${string}`)
+      })
       setDepositHash(hash)
-      setDepositAmount('')
+      toast.loading('Waiting for swap confirmation...', { id: toastId })
     } catch (error: any) {
       console.error('Error depositing:', error)
-      if (error.message) {
-        alert(`Error: ${error.message}`)
-      } else {
-        alert('Failed to swap USDC for BLTM. Please try again.')
-      }
+      toast.error(error.message || 'Failed to swap USDC for BLTM', { id: toastId })
+      toast.dismiss(toastId)
     }
     setIsDepositing(false)
   }
@@ -316,12 +291,11 @@ export default function IndexPage() {
                     )}
                   </div>
                   <div className="space-y-1 text-sm text-gray-500">
-                    <p>Your USDC Balance: {Number(formattedUsdcBalance).toFixed(2)} USDC</p>
-                    <p>Approved Amount: {Number(formattedUsdcAllowance).toFixed(2)} USDC</p>
+                    <p>{Number(formattedUsdcAllowance).toFixed(2)} USDC approved for swap</p>
                     {depositAmount && exchangeRate && (
                       <p>
                         You will receive approximately{' '}
-                        {(Number(depositAmount) * Number(formatUnits(exchangeRate, 18))).toFixed(2)}{' '}
+                        {(Number(depositAmount) * Number(exchangeRate)).toFixed(2)}{' '}
                         BLTM
                       </p>
                     )}

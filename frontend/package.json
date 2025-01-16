@@ -12,6 +12,7 @@
     "next": "latest",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.5.1",
     "viem": "^2.22.9",
     "wagmi": "^2.14.8"
   },
