@@ -13,38 +13,30 @@ import { polygonAmoy } from 'viem/chains'
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { liquidityPoolAbi } from '../config/abi'
-
-const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`
-const BLTM_ADDRESS = process.env.NEXT_PUBLIC_BLTM_ADDRESS as `0x${string}`
-const LIQUIDITY_POOL_ADDRESS = process.env
-  .NEXT_PUBLIC_LIQUIDITY_POOL_ADDRESS as `0x${string}`
-
+import { BLTM_ADDRESS, LIQUIDITY_POOL_ADDRESS } from '../config/consts'
+import { USDC_ADDRESS } from '../config/consts'
+import { SwapUSDCForBLTM } from '../components/SwapUSDCForBLTM'
 
 export default function IndexPage() {
   const { address, isConnected } = useAccount()
   const { open } = useWeb3Modal()
   const chainId = useChainId()
   const { switchChain } = useSwitchChain()
-  const [depositAmount, setDepositAmount] = useState('')
-  const [isApproving, setIsApproving] = useState(false)
-  const [isDepositing, setIsDepositing] = useState(false)
-  const [approvalHash, setApprovalHash] = useState<`0x${string}` | undefined>()
-  const [depositHash, setDepositHash] = useState<`0x${string}` | undefined>()
 
   const isWrongNetwork = isConnected && chainId !== polygonAmoy.id
 
-  const { data: polBalance } = useBalance({
+  const { data: polBalance, refetch: refetchPolBalance } = useBalance({
     address: isWrongNetwork ? undefined : address,
   })
 
-  const { data: usdcBalance } = useReadContract({
+  const { data: usdcBalance, refetch: refetchUsdcBalance } = useReadContract({
     address: USDC_ADDRESS,
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: !isWrongNetwork && address ? [address] : undefined,
   })
 
-  const { data: bltmBalance } = useReadContract({
+  const { data: bltmBalance, refetch: refetchBltmBalance } = useReadContract({
     address: BLTM_ADDRESS,
     abi: erc20Abi,
     functionName: 'balanceOf',
@@ -57,123 +49,13 @@ export default function IndexPage() {
     functionName: 'exchangeRate',
   })
 
-  const { data: usdcAllowance } = useReadContract({
-    address: USDC_ADDRESS,
-    abi: erc20Abi,
-    functionName: 'allowance',
-    args: address ? [address, LIQUIDITY_POOL_ADDRESS] : undefined,
-  })
-
-  const { writeContractAsync: approveUsdc } = useWriteContract()
-  const { writeContractAsync: deposit } = useWriteContract()
-
-  // Get transaction receipts
-  const { isLoading: isWaitingForApproval, isSuccess: isApprovalSuccess } = useWaitForTransactionReceipt({
-    hash: approvalHash,
-  })
-
-  const { isLoading: isWaitingForDeposit, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({
-    hash: depositHash,
-  })
-
-  // Watch for transaction success/failure
-  useEffect(() => {
-    if (isApprovalSuccess) {
-      toast.success('USDC approved successfully!')
-      toast.dismiss()
-    }
-  }, [isApprovalSuccess])
-
-  useEffect(() => {
-    if (isDepositSuccess) {
-      toast.success('Swap completed successfully!')
-      toast.dismiss()
-      setDepositAmount('')
-    }
-  }, [isDepositSuccess])
-
-  const handleApproveUsdc = async () => {
-    if (!depositAmount || !address) return
-    setIsApproving(true)
-    
-    const toastId = toast.loading('Approving USDC...')
-    
-    try {
-      const amount = parseUnits(depositAmount, 6)
-      const hash = await approveUsdc({
-        address: USDC_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'approve',
-        args: [LIQUIDITY_POOL_ADDRESS, amount],
-        chain: polygonAmoy,
-        account: address,
-      })
-      setApprovalHash(hash)
-      toast.loading('Waiting for approval confirmation...', { id: toastId })
-    } catch (error: any) {
-      console.error('Error approving USDC:', error)
-      toast.error(error.message || 'Failed to approve USDC', { duration: 5000 })
-      toast.dismiss(toastId)
-    }
-	
-    setIsApproving(false)
+  const refreshBalances = async () => {
+    const toastId = toast.loading('Refreshing balances...')
+    await refetchPolBalance()
+    await refetchUsdcBalance()
+    await refetchBltmBalance()
+    toast.dismiss(toastId)
   }
-
-  const handleDeposit = async () => {
-    if (!depositAmount || !address) return
-    
-    // Convert amounts to BigInt for accurate comparison
-    const amount = parseUnits(depositAmount, 6)
-    
-    // Check USDC balance
-    if (!usdcBalance || amount > usdcBalance) {
-      toast.error('Insufficient USDC balance')
-      return
-    }
-
-    // Check allowance
-    if (!usdcAllowance || amount > usdcAllowance) {
-      toast.error('Please approve USDC first')
-      return
-    }
-
-    setIsDepositing(true)
-    const toastId = toast.loading('Swapping USDC for BLTM...')
-    
-    try {
-      const hash = await deposit({
-        address: LIQUIDITY_POOL_ADDRESS,
-        abi: liquidityPoolAbi,
-        functionName: 'swapUSDCForBLTM',
-        args: [amount],
-        chain: polygonAmoy,
-        account: address,
-      })
-      setDepositHash(hash)
-      toast.loading('Waiting for swap confirmation...', { id: toastId })
-    } catch (error: any) {
-      console.error('Error depositing:', error)
-      toast.error(error.message || 'Failed to swap USDC for BLTM', { duration: 5000 })
-      toast.dismiss(toastId)
-    }
-    setIsDepositing(false)
-  }
-
-  // Check if the current input amount is approved
-  const hasApprovedAmount = depositAmount && usdcAllowance 
-    ? parseUnits(depositAmount, 6) <= usdcAllowance
-    : false
-
-  // Check if user has enough balance
-  const hasEnoughBalance = depositAmount && usdcBalance
-    ? parseUnits(depositAmount, 6) <= usdcBalance
-    : false
-
-  const isTransactionPending = isWaitingForApproval || isWaitingForDeposit
-
-  // Format balances for display
-  const formattedUsdcBalance = usdcBalance ? formatUnits(usdcBalance, 6) : '0'
-  const formattedUsdcAllowance = usdcAllowance ? formatUnits(usdcAllowance, 6) : '0'
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -190,7 +72,9 @@ export default function IndexPage() {
             </div>
           ) : isWrongNetwork ? (
             <div className="text-center space-y-4">
-              <p className="text-red-500">Please connect to Polygon Amoy network</p>
+              <p className="text-red-500">
+                Please connect to Polygon Amoy network
+              </p>
               <button
                 onClick={() => switchChain({ chainId: polygonAmoy.id })}
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -251,60 +135,11 @@ export default function IndexPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  Swap USDC for BLTM
-                </p>
-                <div className="space-y-2">
-                  <input
-                    type="number"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder="Enter USDC amount"
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <div className="flex gap-2">
-                    {!hasApprovedAmount ? (
-                      <button
-                        onClick={handleApproveUsdc}
-                        disabled={isApproving || isTransactionPending || !depositAmount || !hasEnoughBalance}
-                        className="flex-1 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 disabled:opacity-50"
-                      >
-                        {isApproving
-                          ? 'Approving...'
-                          : isWaitingForApproval
-                          ? 'Confirming Approval...'
-                          : 'Approve USDC'}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleDeposit}
-                        disabled={isDepositing || isTransactionPending || !depositAmount || !hasEnoughBalance}
-                        className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
-                      >
-                        {isDepositing
-                          ? 'Swapping...'
-                          : isWaitingForDeposit
-                          ? 'Confirming Swap...'
-                          : 'Swap USDC for BLTM'}
-                      </button>
-                    )}
-                  </div>
-                  <div className="space-y-1 text-sm text-gray-500">
-                    <p>{Number(formattedUsdcAllowance).toFixed(2)} USDC approved for swap</p>
-                    {depositAmount && exchangeRate && (
-                      <p>
-                        You will receive approximately{' '}
-                        {(Number(depositAmount) * Number(exchangeRate)).toFixed(2)}{' '}
-                        BLTM
-                      </p>
-                    )}
-                    {depositAmount && !hasEnoughBalance && (
-                      <p className="text-red-500">Insufficient USDC balance</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <SwapUSDCForBLTM
+                exchangeRate={exchangeRate}
+                usdcBalance={usdcBalance}
+                refreshBalances={refreshBalances}
+              />
             </div>
           )}
         </div>

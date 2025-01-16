@@ -44,4 +44,3 @@ export const liquidityPoolAbi = [
     outputs: [],
   },
 ] as const
-
