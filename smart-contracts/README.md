@@ -14,3 +14,4 @@ npx hardhat ignition deploy ./ignition/modules/Lock.ts
 
 
 BLTM token deployed to: 0x0DA8D7B57e5905c793Eb873B89bb44Ca18eddBe1
+BLTMLiquidityPool deployed to: 0x24391617F832234f174737fe9FfCe7ACaD7C40Ff
