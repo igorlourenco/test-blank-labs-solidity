@@ -4,18 +4,14 @@ import {
   useReadContract,
   useChainId,
   useSwitchChain,
-  useWriteContract,
-  useWaitForTransactionReceipt,
 } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
-import { erc20Abi, formatUnits, parseUnits } from 'viem'
+import { erc20Abi, formatUnits } from 'viem'
 import { polygonAmoy } from 'viem/chains'
-import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import { USDC_ADDRESS, BLTM_ADDRESS, LIQUIDITY_POOL_ADDRESS } from '../config/consts'
 import { liquidityPoolAbi } from '../config/abi'
-import { BLTM_ADDRESS, LIQUIDITY_POOL_ADDRESS } from '../config/consts'
-import { USDC_ADDRESS } from '../config/consts'
-import { SwapUSDCForBLTM } from '../components/SwapUSDCForBLTM'
+import { TokenSwap } from '../components/TokenSwap'
 
 export default function IndexPage() {
   const { address, isConnected } = useAccount()
@@ -72,9 +68,7 @@ export default function IndexPage() {
             </div>
           ) : isWrongNetwork ? (
             <div className="text-center space-y-4">
-              <p className="text-red-500">
-                Please connect to Polygon Amoy network
-              </p>
+              <p className="text-red-500">Please connect to Polygon Amoy network</p>
               <button
                 onClick={() => switchChain({ chainId: polygonAmoy.id })}
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -95,13 +89,6 @@ export default function IndexPage() {
                 >
                   Disconnect
                 </button>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-blue-600 mb-1">Exchange Rate</p>
-                <p className="text-xl font-bold text-blue-700">
-                  1 USDC = {exchangeRate ? Number(exchangeRate) : '0'} BLTM
-                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -129,15 +116,17 @@ export default function IndexPage() {
                   <p className="text-sm text-gray-600 mb-1">BLTM Balance</p>
                   <p className="text-xl font-bold">
                     {bltmBalance
-                      ? `${Number(formatUnits(bltmBalance, 6)).toFixed(2)} BLTM`
+                      ? `${Number(formatUnits(bltmBalance, 18)).toFixed(2)} BLTM`
                       : '0 BLTM'}
                   </p>
                 </div>
               </div>
 
-              <SwapUSDCForBLTM
-                exchangeRate={exchangeRate}
+              <TokenSwap
+                address={address}
                 usdcBalance={usdcBalance}
+                bltmBalance={bltmBalance}
+                exchangeRate={exchangeRate}
                 refreshBalances={refreshBalances}
               />
             </div>

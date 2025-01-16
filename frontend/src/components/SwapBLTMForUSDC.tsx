@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { polygonAmoy } from 'viem/chains'
-import { TOKEN_DECIMALS, USDC_ADDRESS } from '../config/consts'
+import { BLTM_ADDRESS } from '../config/consts'
 import { erc20Abi, liquidityPoolAbi } from '../config/abi'
 import { LIQUIDITY_POOL_ADDRESS } from '../config/consts'
 import toast from 'react-hot-toast'
@@ -13,30 +13,30 @@ import {
 import { formatUnits } from 'viem'
 import { parseUnits } from 'viem'
 
-interface SwapUSDCForBLTMProps {
+interface SwapBLTMForUSDCProps {
   exchangeRate: bigint
-  usdcBalance: bigint
+  bltmBalance: bigint
   refreshBalances: () => Promise<void>
 }
 
-export const SwapUSDCForBLTM = ({
+export const SwapBLTMForUSDC = ({
   exchangeRate,
-  usdcBalance,
+  bltmBalance,
   refreshBalances,
-}: SwapUSDCForBLTMProps) => {
+}: SwapBLTMForUSDCProps) => {
   const [isApproving, setIsApproving] = useState(false)
-  const [isDepositing, setIsDepositing] = useState(false)
-  const [depositAmount, setDepositAmount] = useState('')
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
+  const [withdrawAmount, setWithdrawAmount] = useState('')
   const [approvalHash, setApprovalHash] = useState<`0x${string}` | undefined>()
-  const [depositHash, setDepositHash] = useState<`0x${string}` | undefined>()
+  const [withdrawHash, setWithdrawHash] = useState<`0x${string}` | undefined>()
 
   const { address } = useAccount()
-  const { writeContractAsync: approveUsdc } = useWriteContract()
-  const { writeContractAsync: deposit } = useWriteContract()
+  const { writeContractAsync: approveBltm } = useWriteContract()
+  const { writeContractAsync: withdraw } = useWriteContract()
 
-  const { data: usdcAllowance, refetch: refetchUsdcAllowance } =
+  const { data: bltmAllowance, refetch: refetchBltmAllowance } =
     useReadContract({
-      address: USDC_ADDRESS,
+      address: BLTM_ADDRESS,
       abi: erc20Abi,
       functionName: 'allowance',
       args: address ? [address, LIQUIDITY_POOL_ADDRESS] : undefined,
@@ -48,81 +48,81 @@ export const SwapUSDCForBLTM = ({
       hash: approvalHash,
     })
 
-  const { isLoading: isWaitingForDeposit, isSuccess: isDepositSuccess } =
+  const { isLoading: isWaitingForWithdraw, isSuccess: isWithdrawSuccess } =
     useWaitForTransactionReceipt({
-      hash: depositHash,
+      hash: withdrawHash,
     })
 
   // Check if the current input amount is approved
   const hasApprovedAmount =
-    depositAmount && usdcAllowance
-      ? parseUnits(depositAmount, TOKEN_DECIMALS) <= usdcAllowance
+    withdrawAmount && bltmAllowance
+      ? parseUnits(withdrawAmount, 6) <= bltmAllowance
       : false
 
   const hasEnoughBalance =
-    depositAmount && usdcBalance
-      ? parseUnits(depositAmount, TOKEN_DECIMALS) <= usdcBalance
+    withdrawAmount && bltmBalance
+      ? parseUnits(withdrawAmount, 6) <= bltmBalance
       : false
 
-  const isTransactionPending = isWaitingForApproval || isWaitingForDeposit
+  const isTransactionPending = isWaitingForApproval || isWaitingForWithdraw
 
-  const formattedUsdcAllowance = usdcAllowance
-    ? formatUnits(usdcAllowance, TOKEN_DECIMALS)
+  const formattedBltmAllowance = bltmAllowance
+    ? formatUnits(bltmAllowance, 6)
     : '0'
 
-  const handleDeposit = async () => {
-    if (!depositAmount || !address) return
+  const handleWithdraw = async () => {
+    if (!withdrawAmount || !address) return
 
     // Convert amounts to BigInt for accurate comparison
-    const amount = parseUnits(depositAmount, TOKEN_DECIMALS)
+    const amount = parseUnits(withdrawAmount, 6)
 
-    // Check USDC balance
-    if (!usdcBalance || amount > usdcBalance) {
-      toast.error('Insufficient USDC balance')
+    // Check BLTM balance
+    if (!bltmBalance || amount > bltmBalance) {
+      toast.error('Insufficient BLTM balance')
       return
     }
 
     // Check allowance
-    if (!usdcAllowance || amount > usdcAllowance) {
-      toast.error('Please approve USDC first')
+    if (!bltmAllowance || amount > bltmAllowance) {
+      toast.error('Please approve BLTM first')
       return
     }
 
-    setIsDepositing(true)
-    const toastId = toast.loading('Swapping USDC for BLTM...')
+    setIsWithdrawing(true)
+    	const toastId = toast.loading('Swapping BLTM for USDC...')
 
     try {
-      const hash = await deposit({
+      const hash = await withdraw({
         address: LIQUIDITY_POOL_ADDRESS,
         abi: liquidityPoolAbi,
-        functionName: 'swapUSDCForBLTM',
+        functionName: 'swapBLTMForUSDC',
         args: [amount],
         chain: polygonAmoy,
         account: address,
       })
-      setDepositHash(hash)
+      setWithdrawHash(hash)
       toast.loading('Waiting for swap confirmation...', { id: toastId })
     } catch (error: any) {
-      console.error('Error depositing:', error)
-      toast.error(error.shortMessage || 'Failed to swap USDC for BLTM', {
+      console.error('Error withdrawing:', error)
+      toast.error(error.shortMessage || 'Failed to swap BLTM for USDC', {
         duration: 5000,
       })
       toast.dismiss(toastId)
     }
 
-    setIsDepositing(false)
+    setIsWithdrawing(false)
   }
 
-  const handleApproveUsdc = async () => {
-    if (!depositAmount || !address) return
+  const handleApproveBltm = async () => {
+    if (!withdrawAmount || !address) return
     setIsApproving(true)
 
-    const toastId = toast.loading('Approving USDC...')
+    const toastId = toast.loading('Approving BLTM...')
 
     try {
-      const amount = parseUnits(depositAmount, TOKEN_DECIMALS)
-      const hash = await approveUsdc({
-        address: USDC_ADDRESS,
+      const amount = parseUnits(withdrawAmount, 6)
+      const hash = await approveBltm({
+        address: BLTM_ADDRESS,
         abi: erc20Abi,
         functionName: 'approve',
         args: [LIQUIDITY_POOL_ADDRESS, amount],
@@ -132,8 +132,8 @@ export const SwapUSDCForBLTM = ({
       setApprovalHash(hash)
       toast.loading('Waiting for approval confirmation...', { id: toastId })
     } catch (error: any) {
-      console.error('Error approving USDC:', error)
-      toast.error(error.shortMessage || 'Failed to approve USDC', { duration: 5000 })
+       console.error('Error approving BLTM:', error)
+      toast.error(error.shortMessage || 'Failed to approve BLTM', { duration: 5000 })
       toast.dismiss(toastId)
     }
 
@@ -143,48 +143,48 @@ export const SwapUSDCForBLTM = ({
   useEffect(() => {
     const approvalPostAction = async () => {
       if (isApprovalSuccess) {
-        toast.success('USDC approved successfully!')
+        toast.success('BLTM approved successfully!')
         toast.dismiss()
         refreshBalances()
-        refetchUsdcAllowance()
+        refetchBltmAllowance()
       }
     }
     approvalPostAction()
   }, [isApprovalSuccess])
 
   useEffect(() => {
-    const depositPostAction = async () => {
-      if (isDepositSuccess) {
-        toast.success('Swap completed successfully!')
+    const withdrawPostAction = async () => {
+      if (isWithdrawSuccess) {
+        	toast.success('Swap completed successfully!')
         toast.dismiss()
-        setDepositAmount('')
+        setWithdrawAmount('')
         refreshBalances()
       }
     }
-    depositPostAction()
-  }, [isDepositSuccess])
+    withdrawPostAction()
+  }, [isWithdrawSuccess])
 
   return (
     <div className="bg-gray-50 p-4 rounded-lg">
       <p className="text-sm font-medium text-gray-700 mb-2">
-        Swap USDC for BLTM
+        Swap BLTM for USDC
       </p>
       <div className="space-y-2">
         <input
           type="number"
-          value={depositAmount}
-          onChange={(e) => setDepositAmount(e.target.value)}
-          placeholder="Enter USDC amount"
+          value={withdrawAmount}
+          onChange={(e) => setWithdrawAmount(e.target.value)}
+          placeholder="Enter BLTM amount"
           className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         />
         <div className="flex gap-2">
           {!hasApprovedAmount ? (
             <button
-              onClick={handleApproveUsdc}
+              onClick={handleApproveBltm}
               disabled={
                 isApproving ||
                 isTransactionPending ||
-                !depositAmount ||
+                	!withdrawAmount ||
                 !hasEnoughBalance
               }
               className="flex-1 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 disabled:opacity-50"
@@ -193,39 +193,39 @@ export const SwapUSDCForBLTM = ({
                 ? 'Approving...'
                 : isWaitingForApproval
                   ? 'Confirming Approval...'
-                  : 'Approve USDC'}
+                  : 'Approve BLTM'}
             </button>
           ) : (
             <button
-              onClick={handleDeposit}
+              	onClick={handleWithdraw}
               disabled={
-                isDepositing ||
+                isWithdrawing ||
                 isTransactionPending ||
-                !depositAmount ||
+                !withdrawAmount ||
                 !hasEnoughBalance
               }
               className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
             >
-              {isDepositing
+              {isWithdrawing
                 ? 'Swapping...'
-                : isWaitingForDeposit
+                : isWaitingForWithdraw
                   ? 'Confirming Swap...'
-                  : 'Swap USDC for BLTM'}
+                  : 'Swap BLTM for USDC'}
             </button>
           )}
         </div>
         <div className="space-y-1 text-sm text-gray-500">
           <p>
-            {Number(formattedUsdcAllowance).toFixed(2)} USDC approved for swap
+            {Number(formattedBltmAllowance).toFixed(2)} BLTM approved for swap
           </p>
-          {depositAmount && exchangeRate && (
+          {withdrawAmount && exchangeRate && (
             <p>
               You will receive approximately{' '}
-              {(Number(depositAmount) * Number(exchangeRate)).toFixed(2)} BLTM
+              {(Number(withdrawAmount) / Number(exchangeRate)).toFixed(2)} USDC
             </p>
           )}
-          {depositAmount && !hasEnoughBalance && (
-            <p className="text-red-500">Insufficient USDC balance</p>
+          {withdrawAmount && !hasEnoughBalance && (
+            <p className="text-red-500">Insufficient BLTM balance</p>
           )}
         </div>
       </div>

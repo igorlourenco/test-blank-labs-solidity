@@ -43,4 +43,11 @@ export const liquidityPoolAbi = [
     inputs: [{ name: 'usdcAmount', type: 'uint256' }],
     outputs: [],
   },
+  {
+    name: 'swapBLTMForUSDC',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'bltmAmount', type: 'uint256' }],
+    outputs: [],
+  },
 ] as const
