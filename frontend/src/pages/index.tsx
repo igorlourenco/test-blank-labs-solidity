@@ -1,9 +1,39 @@
-import { useAccount } from 'wagmi'
+import { useAccount, useBalance, useReadContract } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { formatUnits } from 'viem'
+
+const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`
+const BLTM_ADDRESS = process.env.NEXT_PUBLIC_BLTM_ADDRESS as `0x${string}`
+
+const erc20Abi = [{
+  name: 'balanceOf',
+  type: 'function',
+  stateMutability: 'view',
+  inputs: [{ name: 'account', type: 'address' }],
+  outputs: [{ name: '', type: 'uint256' }],
+}] as const
 
 export default function IndexPage() {
   const { address, isConnected } = useAccount()
   const { open } = useWeb3Modal()
+
+  const { data: polBalance } = useBalance({
+    address,
+  })
+
+  const { data: usdcBalance } = useReadContract({
+    address: USDC_ADDRESS,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  })
+
+  const { data: bltmBalance } = useReadContract({
+    address: BLTM_ADDRESS,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  })
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -19,17 +49,39 @@ export default function IndexPage() {
               </button>
             </div>
           ) : (
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-gray-600">Connected Address</p>
-                <p className="font-mono">{address}</p>
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-gray-600">Connected Address</p>
+                  <p className="font-mono">{address}</p>
+                </div>
+                <button
+                  onClick={() => open()}
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                >
+                  Disconnect
+                </button>
               </div>
-              <button
-                onClick={() => open()}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Disconnect
-              </button>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xl font-bold">
+                    {polBalance ? `${Number(polBalance.formatted).toFixed(4)} ${polBalance.symbol}` : '0'}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xl font-bold">
+                    {usdcBalance ? `${Number(formatUnits(usdcBalance, 6)).toFixed(2)} USDC` : '0 USDC'}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xl font-bold">
+                    {bltmBalance ? `${Number(formatUnits(bltmBalance, 18)).toFixed(2)} BLTM` : '0 BLTM'}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
