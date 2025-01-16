@@ -1,6 +1,7 @@
-import { useAccount, useBalance, useReadContract } from 'wagmi'
+import { useAccount, useBalance, useReadContract, useChainId, useSwitchChain } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { formatUnits } from 'viem'
+import { polygonAmoy } from 'viem/chains'
 
 const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`
 const BLTM_ADDRESS = process.env.NEXT_PUBLIC_BLTM_ADDRESS as `0x${string}`
@@ -16,23 +17,27 @@ const erc20Abi = [{
 export default function IndexPage() {
   const { address, isConnected } = useAccount()
   const { open } = useWeb3Modal()
+  const chainId = useChainId()
+  const { switchChain } = useSwitchChain()
+
+  const isWrongNetwork = isConnected && chainId !== polygonAmoy.id
 
   const { data: polBalance } = useBalance({
-    address,
+    address: isWrongNetwork ? undefined : address,
   })
 
   const { data: usdcBalance } = useReadContract({
     address: USDC_ADDRESS,
     abi: erc20Abi,
     functionName: 'balanceOf',
-    args: address ? [address] : undefined,
+    args: !isWrongNetwork && address ? [address] : undefined,
   })
 
   const { data: bltmBalance } = useReadContract({
     address: BLTM_ADDRESS,
     abi: erc20Abi,
     functionName: 'balanceOf',
-    args: address ? [address] : undefined,
+    args: !isWrongNetwork && address ? [address] : undefined,
   })
 
   return (
@@ -46,6 +51,16 @@ export default function IndexPage() {
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               >
                 Connect Wallet
+              </button>
+            </div>
+          ) : isWrongNetwork ? (
+            <div className="text-center space-y-4">
+              <p className="text-red-500">Please connect to Polygon Amoy network</p>
+              <button
+                onClick={() => switchChain({ chainId: polygonAmoy.id })}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Switch to Polygon Amoy
               </button>
             </div>
           ) : (
