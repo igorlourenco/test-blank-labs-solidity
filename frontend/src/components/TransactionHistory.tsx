@@ -11,6 +11,7 @@ import { formatUnits } from 'viem'
 import { format } from 'date-fns'
 import { TOKEN_DECIMALS } from '../config/consts'
 import { useTransactionHistory } from './hooks/useTransactionHistory'
+import Link from 'next/link'
 
 interface Transaction {
   date: Date
@@ -67,14 +68,14 @@ const columns = [
   columnHelper.accessor('hash', {
     header: 'Transaction',
     cell: (info) => (
-      <a
+      <Link
         href={`https://amoy.polygonscan.com/tx/${info.getValue()}`}
         target="_blank"
         rel="noopener noreferrer"
         className="text-blue-500 hover:text-blue-700 underline"
       >
         {`${info.getValue().slice(0, 6)}...${info.getValue().slice(-4)}`}
-      </a>
+      </Link>
     ),
     enableSorting: false,
   }),

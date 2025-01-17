@@ -1,4 +1,5 @@
 import { useWeb3Modal } from '@web3modal/wagmi/react'
+import Link from 'next/link'
 import { useAccount } from 'wagmi'
 
 export const Account = () => {
@@ -21,6 +22,14 @@ export const Account = () => {
           Disconnect
         </button>
       </div>
+
+      <p>
+        {' '}
+        USDC faucet can be found here -{' '}
+        <Link href="https://faucet.circle.com/" target="_blank" rel="noopener noreferrer" className='text-blue-500 hover:text-blue-700 underline'>
+          https://faucet.circle.com/
+        </Link>
+      </p>
     </div>
   )
 }
