@@ -6,12 +6,16 @@ import { TokenSwap } from '../components/TokenSwap'
 import { useLiquidityPool } from '../components/hooks/useLiquidityPool'
 import { useBalances } from '../components/hooks/useBalances'
 import { TransactionHistory } from '../components/TransactionHistory'
+import { IBalance } from '../components/BalanceCard'
+import { TOKEN_DECIMALS } from '../config/consts'
+import { Balances } from '../components/Balances'
+import { ConnectWallet } from '../components/ConnectWallet'
+import { ChangeNetwork } from '../components/ChangeNetwork'
+import { Account } from '../components/Account'
 
 export default function IndexPage() {
-  const { address, isConnected } = useAccount()
-  const { open } = useWeb3Modal()
+  const { isConnected } = useAccount()
   const chainId = useChainId()
-  const { switchChain } = useSwitchChain()
 
   const isWrongNetwork = isConnected && chainId !== polygonAmoy.id
 
@@ -19,88 +23,48 @@ export default function IndexPage() {
 
   const { polBalance, usdcBalance, bltmBalance } = useBalances()
 
+  const balances: IBalance[] = [
+    {
+      balance: polBalance
+        ? Number(formatUnits(polBalance.value, 18)).toFixed(2)
+        : '0',
+      symbol: 'POL',
+      label: 'POL Balance',
+    },
+    {
+      balance: usdcBalance
+        ? Number(formatUnits(usdcBalance, TOKEN_DECIMALS)).toFixed(2)
+        : '0',
+      symbol: 'USDC',
+      label: 'USDC Balance',
+    },
+    {
+      balance: bltmBalance
+        ? Number(formatUnits(bltmBalance, TOKEN_DECIMALS)).toFixed(2)
+        : '0',
+      symbol: 'BLTM',
+      label: 'BLTM Balance',
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow p-6 space-y-4">
           {!isConnected ? (
-            <div className="text-center">
-              <button
-                onClick={() => open()}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Connect Wallet
-              </button>
-            </div>
+            <ConnectWallet />
           ) : isWrongNetwork ? (
-            <div className="text-center space-y-4">
-              <p className="text-red-500">
-                Please connect to Polygon Amoy network
-              </p>
-              <button
-                onClick={() => switchChain({ chainId: polygonAmoy.id })}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Switch to Polygon Amoy
-              </button>
-            </div>
+            <ChangeNetwork />
           ) : (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-gray-600">Connected Address</p>
-                  <p className="font-mono">{address}</p>
-                </div>
-                <button
-                  onClick={() => open()}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                >
-                  Disconnect
-                </button>
-              </div>
+            <Account />
+          )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-4 md:gap-y-0">
-                <div className="grid grid-cols-1 col-span-1 gap-2">
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Native Balance</p>
-                    <p className="text-xl font-bold">
-                      {polBalance
-                        ? `${Number(polBalance.formatted).toFixed(4)} ${
-                            polBalance.symbol
-                          }`
-                        : '0'}
-                    </p>
-                  </div>
+          {isConnected && !isWrongNetwork && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-4 md:gap-y-0">
+              <Balances balances={balances} exchangeRate={exchangeRate} />
 
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">USDC Balance</p>
-                    <p className="text-xl font-bold">
-                      {usdcBalance
-                        ? `${Number(formatUnits(usdcBalance, 6)).toFixed(2)} USDC`
-                        : '0 USDC'}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">BLTM Balance</p>
-                    <p className="text-xl font-bold">
-                      {bltmBalance
-                        ? `${Number(formatUnits(bltmBalance, 6)).toFixed(2)} BLTM`
-                        : '0 BLTM'}
-                    </p>
-                  </div>
-
-				   <div className="bg-blue-50 p-2 rounded-lg">
-                  <p className="text-sm text-blue-600 mb-1">Exchange Rate</p>
-                  <p className="text-xl font-bold text-blue-700">
-                    1 USDC = {exchangeRate ? Number(exchangeRate) : '0'} BLTM
-                  </p>
-                </div>
-                </div>
-
-                <div className="col-span-2">
-                  <TokenSwap />
-                </div>
+              <div className="col-span-2">
+                <TokenSwap />
               </div>
             </div>
           )}
