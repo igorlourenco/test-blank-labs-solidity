@@ -93,7 +93,7 @@ export function TokenSwap() {
       : false
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg">
+    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:w-1/2 mx-auto">
       <div className="space-y-4">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
@@ -104,18 +104,13 @@ export function TokenSwap() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder={`Enter ${sourceToken} amount`}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="w-full h-10 p-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
-          <p className="text-sm text-gray-500">
-            Balance:{' '}
-            {sourceBalance ? formatUnits(sourceBalance, TOKEN_DECIMALS) : '0'}{' '}
-            {sourceToken}
-          </p>
         </div>
 
         <button
           onClick={handleSwitch}
-          className="mx-auto block p-2 rounded-full hover:bg-gray-200"
+          className="mx-auto border block p-2 rounded-full hover:bg-gray-200"
         >
           <ArrowsUpDownIcon className="h-5 w-5 text-gray-500" />
         </button>
@@ -129,7 +124,7 @@ export function TokenSwap() {
             type="text"
             value={targetAmount}
             disabled
-            className="w-full rounded-md border-gray-300 bg-gray-100 shadow-sm"
+            className="w-full h-10 p-2 rounded-md border-gray-300 bg-gray-100 shadow-sm"
           />
         </div>
 
