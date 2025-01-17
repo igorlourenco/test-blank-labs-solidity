@@ -142,8 +142,8 @@ export function TokenSwap() {
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            {targetToken} Amount (estimated){' '}
-            {!isUsdcToBltm ? 'with 2% fee' : ''}
+            {targetToken} Amount
+            {!isUsdcToBltm ? ' - with 2% fee deducted' : ''}
           </label>
           <input
             type="text"
