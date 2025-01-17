@@ -47,7 +47,7 @@ export default function IndexPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <main className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow p-6 space-y-4">
           {!isConnected ? (
@@ -71,6 +71,6 @@ export default function IndexPage() {
           {isConnected && !isWrongNetwork && <TransactionHistory />}
         </div>
       </div>
-    </div>
+    </main>
   )
 }

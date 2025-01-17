@@ -8,10 +8,12 @@ export const Account = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <p className="text-sm text-gray-600">Connected Address</p>
-          <p className="font-mono">{address}</p>
-        </div>
+        {address && (
+          <div>
+            <p className="text-sm text-gray-600">Connected Address</p>
+            <p className="font-mono">{address}</p>
+          </div>
+        )}
         <button
           onClick={() => open()}
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
