@@ -4,6 +4,7 @@ import { ArrowsUpDownIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { TOKEN_DECIMALS } from '../config/consts'
 import { useLiquidityPool } from './hooks/useLiquidityPool'
+import { useBalances } from './hooks/useBalances'
 
 interface TokenSwapProps {
   address: `0x${string}`
@@ -17,9 +18,6 @@ export function TokenSwap() {
   const [amount, setAmount] = useState('')
 
   const {
-    polBalance,
-    usdcBalance,
-    bltmBalance,
     bltmAllowance,
     usdcAllowance,
     isApproving,
@@ -27,15 +25,12 @@ export function TokenSwap() {
     isTransactionPending,
     isApprovalSuccess,
     isDepositSuccess,
-    refetchBltmAllowance,
-    refetchUsdcAllowance,
     handleDeposit,
     handleApprove,
-    refreshBalances,
     exchangeRate,
   } = useLiquidityPool()
 
-  
+  const { usdcBalance, bltmBalance, refreshBalances } = useBalances()
 
   useEffect(() => {
     const approvalPostAction = async () => {
@@ -43,8 +38,6 @@ export function TokenSwap() {
         toast.success(`${sourceToken} approved successfully!`)
         toast.dismiss()
         await refreshBalances()
-        await refetchUsdcAllowance()
-        await refetchBltmAllowance()
       }
     }
     approvalPostAction()
@@ -57,7 +50,6 @@ export function TokenSwap() {
         toast.dismiss()
         setAmount('')
         await refreshBalances()
-        await refetchUsdcAllowance()
       }
     }
     depositPostAction()

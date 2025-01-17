@@ -1,15 +1,10 @@
-import {
-  useAccount,
-  useBalance,
-  useReadContract,
-  useChainId,
-  useSwitchChain,
-} from 'wagmi'
+import { useAccount, useChainId, useSwitchChain } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { formatUnits } from 'viem'
 import { polygonAmoy } from 'viem/chains'
 import { TokenSwap } from '../components/TokenSwap'
 import { useLiquidityPool } from '../components/hooks/useLiquidityPool'
+import { useBalances } from '../components/hooks/useBalances'
 
 export default function IndexPage() {
   const { address, isConnected } = useAccount()
@@ -19,7 +14,9 @@ export default function IndexPage() {
 
   const isWrongNetwork = isConnected && chainId !== polygonAmoy.id
 
-  const {polBalance, usdcBalance, bltmBalance, exchangeRate} = useLiquidityPool()
+  const { exchangeRate } = useLiquidityPool()
+
+  const { polBalance, usdcBalance, bltmBalance } = useBalances()
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">

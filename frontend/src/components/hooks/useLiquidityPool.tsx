@@ -1,14 +1,14 @@
 import toast from 'react-hot-toast'
-import { formatUnits, parseUnits } from 'viem'
+import { parseUnits } from 'viem'
 import { LIQUIDITY_POOL_ADDRESS, USDC_ADDRESS } from '../../config/consts'
 import { BLTM_ADDRESS } from '../../config/consts'
 import { erc20Abi } from 'viem'
 import { polygonAmoy } from 'viem/chains'
-import { useBalance, useWaitForTransactionReceipt } from 'wagmi'
+import { useWaitForTransactionReceipt } from 'wagmi'
 import { useReadContract } from 'wagmi'
 import { useWriteContract } from 'wagmi'
 import { useAccount } from 'wagmi'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { liquidityPoolAbi } from '../../config/abi'
 
 export const useLiquidityPool = () => {
@@ -21,30 +21,11 @@ export const useLiquidityPool = () => {
   const { writeContractAsync: approve } = useWriteContract()
   const { writeContractAsync: deposit } = useWriteContract()
 
-  const { data: polBalance, refetch: refetchPolBalance } = useBalance({
-    address: address,
-  })
-
-  const { data: usdcBalance, refetch: refetchUsdcBalance } = useReadContract({
-    address: USDC_ADDRESS,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-  })
-
-  const { data: bltmBalance, refetch: refetchBltmBalance } = useReadContract({
-    address: BLTM_ADDRESS,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-  })
-
-    const { data: exchangeRate } = useReadContract({
+  const { data: exchangeRate } = useReadContract({
     address: LIQUIDITY_POOL_ADDRESS,
     abi: liquidityPoolAbi,
     functionName: 'exchangeRate',
   })
-
 
   const { data: bltmAllowance, refetch: refetchBltmAllowance } =
     useReadContract({
@@ -98,10 +79,10 @@ export const useLiquidityPool = () => {
       return
     }
 
+    const tokenToSwap = token === 'BLTM' ? 'USDC' : 'BLTM'
+
     setIsDepositing(true)
-    const toastId = toast.loading(
-      `Swapping ${token} for ${token === 'BLTM' ? 'USDC' : 'BLTM'} ...`,
-    )
+    const toastId = toast.loading(`Swapping ${token} for ${tokenToSwap} ...`)
 
     try {
       const hash = await deposit({
@@ -113,12 +94,15 @@ export const useLiquidityPool = () => {
         account: address,
       })
       setDepositHash(hash)
-      toast.loading('Waiting for swap confirmation...', { id: toastId })
+      toast.loading(`Waiting for swap confirmation...`, { id: toastId })
     } catch (error: any) {
       console.error('Error depositing:', error)
-      toast.error(error.shortMessage || 'Failed to swap BLTM for USDC', {
-        duration: 5000,
-      })
+      toast.error(
+        error.shortMessage || `Failed to swap ${token} for ${tokenToSwap}`,
+        {
+          duration: 5000,
+        },
+      )
       toast.dismiss(toastId)
     }
 
@@ -157,17 +141,13 @@ export const useLiquidityPool = () => {
     setIsApproving(false)
   }
 
-  const refreshBalances = async () => {
-    await refetchPolBalance()
-    await refetchUsdcBalance()
-    await refetchBltmBalance()
-  }
+  useEffect(() => {
+    refetchBltmAllowance()
+    refetchUsdcAllowance()
+  }, [address, isApprovalSuccess, isDepositSuccess])
 
   return {
-    polBalance,
-    usdcBalance,
-    bltmBalance,
-	exchangeRate,
+    exchangeRate,
     bltmAllowance,
     usdcAllowance,
     isApproving,
@@ -181,6 +161,5 @@ export const useLiquidityPool = () => {
     refetchUsdcAllowance,
     handleDeposit,
     handleApprove,
-    refreshBalances,
   }
 }
