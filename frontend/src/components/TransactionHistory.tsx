@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   createColumnHelper,
   flexRender,
@@ -72,7 +72,7 @@ const columns = [
 export function TransactionHistory() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [actionFilter, setActionFilter] = useState<string>('')
-  const transactions = useTransactionHistory()
+  const { transactions, fetchPastEvents } = useTransactionHistory()
 
   const table = useReactTable({
     data: transactions,
@@ -89,6 +89,23 @@ export function TransactionHistory() {
     getFilteredRowModel: getFilteredRowModel(),
   })
 
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await fetchPastEvents()
+      } catch (error) {
+        console.error('Error fetching transactions:', error)
+      }
+    }
+
+    fetchData()
+
+    const interval = setInterval(fetchData, 10000) // 10 seconds
+
+    return () => clearInterval(interval)
+  }, [])
+  
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="p-4 border-b border-gray-200">
