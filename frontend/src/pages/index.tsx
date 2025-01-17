@@ -1,5 +1,4 @@
-import { useAccount, useChainId, useSwitchChain } from 'wagmi'
-import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { useAccount, useChainId } from 'wagmi'
 import { formatUnits } from 'viem'
 import { polygonAmoy } from 'viem/chains'
 import { TokenSwap } from '../components/TokenSwap'

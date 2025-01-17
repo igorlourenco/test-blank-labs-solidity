@@ -1,4 +1,3 @@
-import { switchChain } from 'viem/actions'
 import { polygonAmoy } from 'viem/chains'
 import { useSwitchChain } from 'wagmi'
 

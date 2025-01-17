@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { formatUnits, parseUnits } from 'viem'
+import { parseUnits } from 'viem'
 import { ArrowsUpDownIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { TOKEN_DECIMALS } from '../config/consts'
