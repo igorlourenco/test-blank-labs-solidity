@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { parseUnits } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
 import { ArrowsUpDownIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { TOKEN_DECIMALS } from '../config/consts'
@@ -80,13 +80,22 @@ export function TokenSwap() {
     await handleDeposit(amount, sourceBalance, sourceToken)
   }
 
-  // Check if amount is approved
+  const handleSetMax = () => {
+    if (!sourceBalance) return
+    setAmount(formatUnits(sourceBalance, TOKEN_DECIMALS))
+  }
+
+  const handleSetHalf = () => {
+    if (!sourceBalance) return
+    const halfBalance = sourceBalance / BigInt(2)
+    setAmount(formatUnits(halfBalance, TOKEN_DECIMALS))
+  }
+
   const hasApprovedAmount =
     amount && sourceAllowance
       ? parseUnits(amount, TOKEN_DECIMALS) <= sourceAllowance
       : false
 
-  // Check if user has enough balance
   const hasEnoughBalance =
     amount && sourceBalance
       ? parseUnits(amount, TOKEN_DECIMALS) <= sourceBalance
@@ -99,13 +108,29 @@ export function TokenSwap() {
           <label className="block text-sm font-medium text-gray-700">
             {sourceToken} Amount
           </label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder={`Enter ${sourceToken} amount`}
-            className="w-full h-10 p-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
+          <div className="relative">
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={`Enter ${sourceToken} amount`}
+              className="w-full h-10 p-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-[160px]"
+            />
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1">
+              <button
+                onClick={handleSetHalf}
+                className="px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 rounded"
+              >
+                HALF
+              </button>
+              <button
+                onClick={handleSetMax}
+                className="px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 rounded"
+              >
+                MAX
+              </button>
+            </div>
+          </div>
         </div>
 
         <button
