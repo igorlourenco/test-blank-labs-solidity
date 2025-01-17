@@ -12,7 +12,7 @@ export const Balances = ({ balances, exchangeRate }: BalancesProps) => {
         <BalanceCard key={balance.label} {...balance} />
       ))}
 
-      <div className="bg-blue-50 p-2 rounded-lg">
+      <div className="bg-blue-50 p-2 rounded-lg shadow-md">
         <p className="text-sm text-blue-600 mb-1">Exchange Rate</p>
         <p className="text-xl font-bold text-blue-700">
           1 USDC = {exchangeRate ? Number(exchangeRate) : '0'} BLTM

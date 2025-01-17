@@ -93,7 +93,7 @@ export function TokenSwap() {
       : false
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 w-full mx-auto">
+    <div className="bg-gray-50 p-4  rounded-lg shadow-md w-full mx-auto">
       <div className="space-y-4">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">

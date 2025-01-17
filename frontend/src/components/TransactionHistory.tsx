@@ -122,7 +122,7 @@ export function TransactionHistory() {
   }, [])
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="p-4 border-b border-gray-200">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-900">
