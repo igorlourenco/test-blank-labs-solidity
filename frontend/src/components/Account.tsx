@@ -26,7 +26,12 @@ export const Account = () => {
       <p>
         {' '}
         USDC faucet can be found here -{' '}
-        <Link href="https://faucet.circle.com/" target="_blank" rel="noopener noreferrer" className='text-blue-500 hover:text-blue-700 underline'>
+        <Link
+          href="https://faucet.circle.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-700 underline"
+        >
           https://faucet.circle.com/
         </Link>
       </p>

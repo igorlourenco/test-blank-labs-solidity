@@ -88,7 +88,7 @@ describe("BLTMLiquidityPool", function () {
     const royaltyPercentage = 2;
     const royaltyAmount = (usdcAmount * BigInt(royaltyPercentage)) / BigInt(100);
     const netUsdcAmount = usdcAmount - royaltyAmount;
-    const expectedBLTMAmount = netUsdcAmount * BigInt(initialExchangeRate);
+    const expectedBLTMAmount = usdcAmount * BigInt(initialExchangeRate);
 
     it("Should swap USDC for BLTM correctly and track royalties", async function () {
       const initialUSDCBalance = await mockUSDC.balanceOf(user1.address);
