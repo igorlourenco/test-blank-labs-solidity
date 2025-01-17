@@ -50,4 +50,24 @@ export const liquidityPoolAbi = [
     inputs: [{ name: 'bltmAmount', type: 'uint256' }],
     outputs: [],
   },
+  {
+    name: 'TokensSwapped',
+    type: 'event',
+    inputs: [
+      { type: 'address', name: 'user', indexed: true },
+      { type: 'uint256', name: 'usdcAmount' },
+      { type: 'uint256', name: 'bltmAmount' },
+      { type: 'uint256', name: 'royaltyAmount' },
+    ],
+  },
+  {
+    name: 'TokensRedeemed',
+    type: 'event',
+    inputs: [
+      { type: 'address', name: 'user', indexed: true },
+      { type: 'uint256', name: 'usdcAmount' },
+      { type: 'uint256', name: 'bltmAmount' },
+      { type: 'uint256', name: 'royaltyAmount' },
+    ],
+  },
 ] as const

@@ -5,6 +5,7 @@ import { polygonAmoy } from 'viem/chains'
 import { TokenSwap } from '../components/TokenSwap'
 import { useLiquidityPool } from '../components/hooks/useLiquidityPool'
 import { useBalances } from '../components/hooks/useBalances'
+import { TransactionHistory } from '../components/TransactionHistory'
 
 export default function IndexPage() {
   const { address, isConnected } = useAccount()
@@ -99,6 +100,8 @@ export default function IndexPage() {
               <TokenSwap />
             </div>
           )}
+
+          {isConnected && !isWrongNetwork && <TransactionHistory />}
         </div>
       </div>
     </div>
