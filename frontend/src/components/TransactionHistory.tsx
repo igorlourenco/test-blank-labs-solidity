@@ -1,16 +1,14 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
-  SortingState,
   useReactTable,
-  getFilteredRowModel,
+  SortingState,
+  getSortedRowModel,
 } from '@tanstack/react-table'
 import { formatUnits } from 'viem'
 import { format } from 'date-fns'
-import { useLiquidityPool } from './hooks/useLiquidityPool'
 import { TOKEN_DECIMALS } from '../config/consts'
 import { useTransactionHistory } from './hooks/useTransactionHistory'
 
@@ -28,11 +26,15 @@ const columns = [
   columnHelper.accessor('date', {
     header: 'Date',
     cell: (info) => format(info.getValue(), 'PPpp'),
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.date.getTime()
+      const b = rowB.original.date.getTime()
+      return a < b ? -1 : a > b ? 1 : 0
+    },
   }),
   columnHelper.accessor('action', {
     header: 'Action',
     cell: (info) => info.getValue(),
-    filterFn: 'equals',
   }),
   columnHelper.accessor('given', {
     header: 'Given',
@@ -40,8 +42,12 @@ const columns = [
       const given = info.getValue()
       const action = info.row.original.action
       const token = action === 'Deposit' ? 'USDC' : 'BLTM'
-
       return `${formatUnits(given, TOKEN_DECIMALS)} ${token}`
+    },
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.given
+      const b = rowB.original.given
+      return a < b ? -1 : a > b ? 1 : 0
     },
   }),
   columnHelper.accessor('received', {
@@ -50,15 +56,19 @@ const columns = [
       const received = info.getValue()
       const action = info.row.original.action
       const token = action === 'Deposit' ? 'BLTM' : 'USDC'
-
       return `${formatUnits(received, TOKEN_DECIMALS)} ${token}`
+    },
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.received
+      const b = rowB.original.received
+      return a < b ? -1 : a > b ? 1 : 0
     },
   }),
   columnHelper.accessor('hash', {
     header: 'Transaction',
     cell: (info) => (
       <a
-        href={`https://explorer.goerli.linea.build/tx/${info.getValue()}`}
+        href={`https://amoy.polygonscan.com/tx/${info.getValue()}`}
         target="_blank"
         rel="noopener noreferrer"
         className="text-blue-500 hover:text-blue-700 underline"
@@ -66,29 +76,34 @@ const columns = [
         {`${info.getValue().slice(0, 6)}...${info.getValue().slice(-4)}`}
       </a>
     ),
+    enableSorting: false,
   }),
 ]
 
 export function TransactionHistory() {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [actionFilter, setActionFilter] = useState<string>('')
   const { transactions, fetchPastEvents } = useTransactionHistory()
+  const [selectedAction, setSelectedAction] = useState<string>('all')
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'date', desc: true },
+  ])
+
+  const filteredData = useMemo(() => {
+    return selectedAction === 'all'
+      ? transactions
+      : transactions.filter((tx) => tx.action.toLowerCase() === selectedAction)
+  }, [transactions, selectedAction])
 
   const table = useReactTable({
-    data: transactions,
+    data: filteredData,
     columns,
     state: {
       sorting,
-      columnFilters: actionFilter
-        ? [{ id: 'action', value: actionFilter }]
-        : [],
     },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    enableSorting: true,
   })
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,22 +120,22 @@ export function TransactionHistory() {
 
     return () => clearInterval(interval)
   }, [])
-  
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Transaction History
-        </h2>
-        <div className="mt-2">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Transaction History
+          </h2>
           <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="mt-1 block w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            value={selectedAction}
+            onChange={(e) => setSelectedAction(e.target.value)}
+            className="block w-40 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
-            <option value="">All Actions</option>
-            <option value="Deposit">Deposits Only</option>
-            <option value="Withdraw">Withdrawals Only</option>
+            <option value="all">All Actions</option>
+            <option value="deposit">Deposits Only</option>
+            <option value="withdraw">Withdrawals Only</option>
           </select>
         </div>
       </div>
@@ -135,7 +150,7 @@ export function TransactionHistory() {
                     onClick={header.column.getToggleSortingHandler()}
                     className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
                       header.column.getCanSort()
-                        ? 'cursor-pointer select-none'
+                        ? 'cursor-pointer hover:bg-gray-100'
                         : ''
                     }`}
                   >
@@ -144,10 +159,14 @@ export function TransactionHistory() {
                         header.column.columnDef.header,
                         header.getContext(),
                       )}
-                      {{
-                        asc: ' 🔼',
-                        desc: ' 🔽',
-                      }[header.column.getIsSorted() as string] ?? null}
+                      {header.column.getCanSort() && (
+                        <span className="text-gray-400">
+                          {{
+                            asc: '↑',
+                            desc: '↓',
+                          }[header.column.getIsSorted() as string] ?? '↕'}
+                        </span>
+                      )}
                     </div>
                   </th>
                 ))}
