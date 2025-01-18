@@ -6,6 +6,17 @@ export const Account = () => {
   const { open } = useWeb3Modal()
   const { address } = useAccount()
 
+  const smartContracts = [
+    {
+      name: 'BLTM',
+      address: process.env.NEXT_PUBLIC_BLTM_ADDRESS,
+    },
+    {
+      name: 'Liquidity Pool',
+      address: process.env.NEXT_PUBLIC_LIQUIDITY_POOL_ADDRESS,
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -24,7 +35,6 @@ export const Account = () => {
       </div>
 
       <p>
-        {' '}
         USDC faucet can be found here -{' '}
         <Link
           href="https://faucet.circle.com/"
@@ -35,6 +45,20 @@ export const Account = () => {
           https://faucet.circle.com/
         </Link>
       </p>
+
+      {smartContracts.map(({ name, address }) => (
+        <p>
+          {name} - {' '}
+          <Link
+            href={`https://amoy.polygonscan.com/address/${address}#writeContract`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-700 underline"
+          >
+            {address}
+          </Link>
+        </p>
+      ))}
     </div>
   )
 }
