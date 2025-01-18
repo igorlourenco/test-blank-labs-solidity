@@ -18,15 +18,23 @@ async function main() {
   }
 
   // default exchange rate: 1 USDC = 1 BLTM
-  const exchangeRate = process.env.EXCHANGE_RATE ? parseInt(process.env.EXCHANGE_RATE) : 1;
+  const exchangeRate = process.env.EXCHANGE_RATE
+    ? parseInt(process.env.EXCHANGE_RATE)
+    : 1;
 
   console.log("Using BLTM address:", bltmAddress);
   console.log("Using USDC address:", usdcAddress);
   console.log("Using exchange rate:", exchangeRate);
 
   // deploy liquidity pool
-  const BLTMLiquidityPool = await ethers.getContractFactory("BLTMLiquidityPool");
-  const liquidityPool = await BLTMLiquidityPool.deploy(usdcAddress, bltmAddress, exchangeRate);
+  const BLTMLiquidityPool = await ethers.getContractFactory(
+    "BLTMLiquidityPool"
+  );
+  const liquidityPool = await BLTMLiquidityPool.deploy(
+    usdcAddress,
+    bltmAddress,
+    exchangeRate
+  );
 
   await liquidityPool.waitForDeployment();
 
@@ -34,7 +42,10 @@ async function main() {
   console.log("BLTMLiquidityPool deployed to:", liquidityPoolAddress);
 
   // get BLTM contract instance
-  const bltm = await ethers.getContractAt("BLTM", bltmAddress) as unknown as BLTM;
+  const bltm = (await ethers.getContractAt(
+    "BLTM",
+    bltmAddress
+  )) as unknown as BLTM;
 
   // grant minter role to liquidity pool
   const minterRole = await bltm.MINTER_ROLE();
@@ -48,4 +59,4 @@ main()
   .catch((error) => {
     console.error(error);
     process.exit(1);
-  }); 
+  });

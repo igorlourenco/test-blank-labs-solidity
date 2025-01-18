@@ -26,7 +26,9 @@ describe("BLTMLiquidityPool", function () {
     await mockUSDC.waitForDeployment();
 
     // deploy Liquidity Pool
-    const BLTMLiquidityPool = await ethers.getContractFactory("BLTMLiquidityPool");
+    const BLTMLiquidityPool = await ethers.getContractFactory(
+      "BLTMLiquidityPool"
+    );
     liquidityPool = await BLTMLiquidityPool.deploy(
       await mockUSDC.getAddress(),
       await bltm.getAddress(),
@@ -35,11 +37,16 @@ describe("BLTMLiquidityPool", function () {
     await liquidityPool.waitForDeployment();
 
     // grant minter role to liquidity pool
-    await bltm.grantRole(await bltm.MINTER_ROLE(), await liquidityPool.getAddress());
+    await bltm.grantRole(
+      await bltm.MINTER_ROLE(),
+      await liquidityPool.getAddress()
+    );
 
     // setup mock USDC for testing
     await mockUSDC.mint(user1.address, ethers.parseUnits("1000", 6));
-    await mockUSDC.connect(user1).approve(await liquidityPool.getAddress(), ethers.MaxUint256);
+    await mockUSDC
+      .connect(user1)
+      .approve(await liquidityPool.getAddress(), ethers.MaxUint256);
   });
 
   describe("Deployment", function () {
@@ -73,7 +80,10 @@ describe("BLTMLiquidityPool", function () {
       const newRate = 3;
       await expect(
         liquidityPool.connect(user1).updateExchangeRate(newRate)
-      ).to.be.revertedWithCustomError(liquidityPool, "AccessControlUnauthorizedAccount");
+      ).to.be.revertedWithCustomError(
+        liquidityPool,
+        "AccessControlUnauthorizedAccount"
+      );
     });
 
     it("Should not allow setting exchange rate to zero", async function () {
@@ -86,7 +96,8 @@ describe("BLTMLiquidityPool", function () {
   describe("Token Swapping and Royalties", function () {
     const usdcAmount = ethers.parseUnits("100", 6); // 100 USDC
     const royaltyPercentage = 2;
-    const royaltyAmount = (usdcAmount * BigInt(royaltyPercentage)) / BigInt(100);
+    const royaltyAmount =
+      (usdcAmount * BigInt(royaltyPercentage)) / BigInt(100);
     const netUsdcAmount = usdcAmount - royaltyAmount;
     const expectedBLTMAmount = usdcAmount * BigInt(initialExchangeRate);
 
@@ -95,11 +106,15 @@ describe("BLTMLiquidityPool", function () {
       const initialBLTMBalance = await bltm.balanceOf(user1.address);
 
       await liquidityPool.connect(user1).swapUSDCForBLTM(usdcAmount);
-      
+
       // check balances
-      expect(await mockUSDC.balanceOf(user1.address)).to.equal(initialUSDCBalance - usdcAmount);
-      expect(await bltm.balanceOf(user1.address)).to.equal(initialBLTMBalance + expectedBLTMAmount);
-      
+      expect(await mockUSDC.balanceOf(user1.address)).to.equal(
+        initialUSDCBalance - usdcAmount
+      );
+      expect(await bltm.balanceOf(user1.address)).to.equal(
+        initialBLTMBalance + expectedBLTMAmount
+      );
+
       // check royalties
       expect(await liquidityPool.royaltiesBalance()).to.equal(royaltyAmount);
       expect(await liquidityPool.getAvailableUSDC()).to.equal(netUsdcAmount);
@@ -109,32 +124,44 @@ describe("BLTMLiquidityPool", function () {
       // do a USDC to BLTM swap to ensure the pool has USDC
       await liquidityPool.connect(user1).swapUSDCForBLTM(usdcAmount);
       const initialRoyalties = await liquidityPool.royaltiesBalance();
-      
+
       // do the BLTM to USDC swap
-      await bltm.connect(user1).approve(await liquidityPool.getAddress(), expectedBLTMAmount);
+      await bltm
+        .connect(user1)
+        .approve(await liquidityPool.getAddress(), expectedBLTMAmount);
 
       const initialUSDCBalance = await mockUSDC.balanceOf(user1.address);
       const initialBLTMBalance = await bltm.balanceOf(user1.address);
-      
+
       await liquidityPool.connect(user1).swapBLTMForUSDC(expectedBLTMAmount);
-      
+
       // calculate expected values for the second swap
-      const secondSwapUsdcAmount = expectedBLTMAmount / BigInt(initialExchangeRate);
-      const secondSwapRoyalty = (secondSwapUsdcAmount * BigInt(royaltyPercentage)) / BigInt(100);
+      const secondSwapUsdcAmount =
+        expectedBLTMAmount / BigInt(initialExchangeRate);
+      const secondSwapRoyalty =
+        (secondSwapUsdcAmount * BigInt(royaltyPercentage)) / BigInt(100);
       const secondSwapNetAmount = secondSwapUsdcAmount - secondSwapRoyalty;
-      
+
       // check balances
-      expect(await bltm.balanceOf(user1.address)).to.equal(initialBLTMBalance - expectedBLTMAmount);
-      expect(await mockUSDC.balanceOf(user1.address)).to.equal(initialUSDCBalance + secondSwapNetAmount);
-      
+      expect(await bltm.balanceOf(user1.address)).to.equal(
+        initialBLTMBalance - expectedBLTMAmount
+      );
+      expect(await mockUSDC.balanceOf(user1.address)).to.equal(
+        initialUSDCBalance + secondSwapNetAmount
+      );
+
       // check royalties - should include both swaps
-      expect(await liquidityPool.royaltiesBalance()).to.equal(initialRoyalties + secondSwapRoyalty);
+      expect(await liquidityPool.royaltiesBalance()).to.equal(
+        initialRoyalties + secondSwapRoyalty
+      );
     });
 
     it("Should prevent BLTM to USDC swap if insufficient non-royalty USDC in pool", async function () {
       // mint BLTM to user1
       await bltm.mint(user1.address, expectedBLTMAmount);
-      await bltm.connect(user1).approve(await liquidityPool.getAddress(), expectedBLTMAmount);
+      await bltm
+        .connect(user1)
+        .approve(await liquidityPool.getAddress(), expectedBLTMAmount);
 
       // try to swap without enough USDC in the pool
       await expect(
@@ -145,7 +172,7 @@ describe("BLTMLiquidityPool", function () {
 
   describe("Royalties Management", function () {
     const usdcAmount = ethers.parseUnits("100", 6);
-    
+
     beforeEach(async function () {
       // Perform a swap to generate some royalties
       await liquidityPool.connect(user1).swapUSDCForBLTM(usdcAmount);
@@ -158,7 +185,9 @@ describe("BLTMLiquidityPool", function () {
       await liquidityPool.withdrawRoyalties(royaltyBalance);
 
       expect(await liquidityPool.royaltiesBalance()).to.equal(0);
-      expect(await mockUSDC.balanceOf(owner.address)).to.equal(initialOwnerBalance + royaltyBalance);
+      expect(await mockUSDC.balanceOf(owner.address)).to.equal(
+        initialOwnerBalance + royaltyBalance
+      );
     });
 
     it("Should not allow withdrawing more than available royalties", async function () {
@@ -172,28 +201,37 @@ describe("BLTMLiquidityPool", function () {
       const royaltyBalance = await liquidityPool.royaltiesBalance();
       await expect(
         liquidityPool.connect(user1).withdrawRoyalties(royaltyBalance)
-      ).to.be.revertedWithCustomError(liquidityPool, "AccessControlUnauthorizedAccount");
+      ).to.be.revertedWithCustomError(
+        liquidityPool,
+        "AccessControlUnauthorizedAccount"
+      );
     });
 
     it("Should track royalties correctly across multiple swaps", async function () {
       const initialRoyalties = await liquidityPool.royaltiesBalance();
-      
+
       // Perform another swap
       await liquidityPool.connect(user1).swapUSDCForBLTM(usdcAmount);
-      
+
       const royaltyAmount = (usdcAmount * BigInt(2)) / BigInt(100);
-      expect(await liquidityPool.royaltiesBalance()).to.equal(initialRoyalties + royaltyAmount);
+      expect(await liquidityPool.royaltiesBalance()).to.equal(
+        initialRoyalties + royaltyAmount
+      );
     });
 
     it("Should maintain correct available USDC after royalty withdrawal", async function () {
-      const totalUSDC = await mockUSDC.balanceOf(await liquidityPool.getAddress());
+      const totalUSDC = await mockUSDC.balanceOf(
+        await liquidityPool.getAddress()
+      );
       const royaltyBalance = await liquidityPool.royaltiesBalance();
       const availableUSDC = await liquidityPool.getAvailableUSDC();
 
       await liquidityPool.withdrawRoyalties(royaltyBalance);
 
       expect(await liquidityPool.getAvailableUSDC()).to.equal(availableUSDC);
-      expect(await mockUSDC.balanceOf(await liquidityPool.getAddress())).to.equal(totalUSDC - royaltyBalance);
+      expect(
+        await mockUSDC.balanceOf(await liquidityPool.getAddress())
+      ).to.equal(totalUSDC - royaltyBalance);
     });
   });
-}); 
+});

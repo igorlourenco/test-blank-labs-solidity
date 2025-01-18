@@ -5,7 +5,7 @@
   "scripts": {
     "test": "npx hardhat test",
     "deploy-bltm": "npx hardhat run scripts/deploy.ts --network polygon_amoy",
-	"deploy-lp": "npx hardhat run scripts/deploy-liquidity-pool.ts --network polygon_amoy"
+    "deploy-lp": "npx hardhat run scripts/deploy-liquidity-pool.ts --network polygon_amoy"
   },
   "author": "",
   "license": "ISC",

@@ -11,7 +11,7 @@ describe("BLTM", function () {
 
   beforeEach(async function () {
     [owner, addr1, addr2] = await ethers.getSigners();
-    
+
     const BLTM = await ethers.getContractFactory("BLTM");
     bltm = await BLTM.deploy(owner.address);
     await bltm.waitForDeployment();
@@ -79,9 +79,10 @@ describe("BLTM", function () {
     });
 
     it("Should not allow pausing by non-pauser role", async function () {
-      await expect(
-        bltm.connect(addr1).pause()
-      ).to.be.revertedWithCustomError(bltm, "AccessControlUnauthorizedAccount");
+      await expect(bltm.connect(addr1).pause()).to.be.revertedWithCustomError(
+        bltm,
+        "AccessControlUnauthorizedAccount"
+      );
     });
 
     it("Should prevent transfers when paused", async function () {
@@ -98,4 +99,4 @@ describe("BLTM", function () {
       expect(await bltm.balanceOf(addr2.address)).to.equal(100);
     });
   });
-}); 
+});
