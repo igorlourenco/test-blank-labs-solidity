@@ -117,9 +117,8 @@ Access the application at [http://localhost:3000](http://localhost:3000)
 - All the items above are implemented according to the requirements of the project (checklist below in this file)
 
 ### Challenges and Solutions
-A brief description of the development approach, any challenges faced during the implementation, how they were overcome, any additional features or improvements you suggest or would implement if you had more time.
 
-The approach was very simple, since the requirements were very clear. First, I created the smart contracts, starting with the BLTM Token, then moving on to the Liquidity Pool. After that, I created the tests to validate each point of the logic I implemented. In this part, I saw that some implementations were pending, such as the rioyalties one, for example, so I went back and made the necessary adjustments to the smart contracts. After that, I deployed them and moved on to the frontend.
+The approach was straightforward since the requirements were very simple. First, I created the smart contracts, starting with the BLTM Token, then moving on to the Liquidity Pool. After that, I made the tests to validate each point of the logic I implemented. In this part, I saw that some implementations were pending, such as the rioyalties one, for example, so I went back and made the necessary adjustments to the smart contracts. After that, I deployed them and moved on to the frontend.
 
 I started on the frontend with the wallet connection part, then the interaction with the contracts. So far, it was easy. When it came time to create the transaction history table, I found the real challenge, because I had never done anything like that before. I broke the application a few times trying to query in real time, because I was making too many calls to the blockchain and the network's RPC didn't support it. I solved this by making a call every 10 seconds, to update "in real time" as soon as the user makes a transaction. Other than that, nothing too complicated.
 
