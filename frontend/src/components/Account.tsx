@@ -47,7 +47,7 @@ export const Account = () => {
       </p>
 
       {smartContracts.map(({ name, address }) => (
-        <p>
+        <p key={address}>
           {name} - {' '}
           <Link
             href={`https://amoy.polygonscan.com/address/${address}#writeContract`}
